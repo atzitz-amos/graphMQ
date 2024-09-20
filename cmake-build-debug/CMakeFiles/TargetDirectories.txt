@@ -1,0 +1,3 @@
+C:/Users/amosa/OneDrive/IdeaProjects/graphMQ/cmake-build-debug/CMakeFiles/graphMQ.dir
+C:/Users/amosa/OneDrive/IdeaProjects/graphMQ/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/amosa/OneDrive/IdeaProjects/graphMQ/cmake-build-debug/CMakeFiles/rebuild_cache.dir
