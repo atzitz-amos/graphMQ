@@ -21,6 +21,9 @@ The three lowest bits of the bytecode *(in lightblue in the documentation)* repr
 | 110 | Arg 0 represents an offset from the pointer in `TOS`          | .1234                             |
 | 111 | Arg 0 and Arg 1 together represents an offset in the bytecode | ->1234                            |
 
+> [!NOTE]
+> LSb `111` can also mean that the value is found under `TOS1`
+
 # Stack-Based operations
 
 ## PUSH
@@ -59,7 +62,7 @@ i_neg #0;
 ```
 performs: `locals[0] = -locals[0]`
 
-If the three `LSb` are `000`, the operation will execute on the stack, i.e.
+If the three `LSb` are `111`, the operation will execute on the stack, i.e.
 ```
 i_neg;
 ```
@@ -91,6 +94,8 @@ $${\color{gray}001\color{pink}xx\color{lightblue}bbb}$$, where $${\color{pink}xx
 > [!IMPORTANT]
 > Using this instruction with LSb `110` will result in an offset from `TOS1` instead of `TOS`, `TOS` already being used.
 
+> [!IMPORTANT]
+> Using this instruction with LSb `111` will result in the operation being conducted with `TOS1`.
 
 ## IP_ADD / IP_SUB / IP_MUL / IP_DIV
 Performs the corresponding inplace operation on the variable pointed to by `ARG0` with `TOS`, i.e.
