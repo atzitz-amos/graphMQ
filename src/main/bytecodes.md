@@ -199,10 +199,10 @@ $${\color{gray}0100\color{pink}x\color{lightblue}bbb}$$, with $${\color{pink}x}$
 | $${\color{gray}11000010}$$                  | F_MAKEARRAY |
 | $${\color{gray}11000011}$$                  | R_MAKEARRAY |
 | $${\color{gray}11001\color{lightblue}bbb}$$ | ARRACCESS   |
-| $${\color{gray}11010\color{lightblue}bbb}$$ | ARRAYLENGTH |
-| $${\color{gray}11011\color{lightblue}bbb}$$ | AWAIT       |
-| $${\color{gray}11100\color{lightblue}bbb}$$ | ASYNCCALL   |
-| $${\color{gray}11101\color{lightblue}bbb}$$ | JOIN        |
-| $${\color{gray}11110\color{lightblue}bbb}$$ |             |
+| $${\color{gray}11010\color{lightblue}bbb}$$ | ARRSTORE    |
+| $${\color{gray}11011\color{lightblue}bbb}$$ | ARRLENGTH   |
+| $${\color{gray}11100\color{lightblue}bbb}$$ | AWAIT       |
+| $${\color{gray}11101\color{lightblue}bbb}$$ | ASYNCCALL   |
+| $${\color{gray}11110\color{lightblue}bbb}$$ | JOIN        |
 | $${\color{gray}11111\color{lightblue}bbb}$$ |             |
 
