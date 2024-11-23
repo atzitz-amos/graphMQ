@@ -186,14 +186,14 @@ $${\color{gray}0100\color{pink}x\color{lightblue}bbb}$$, with $${\color{pink}x}$
 | $${\color{gray}01101\color{lightblue}bbb}$$ | IP_SUB      |
 | $${\color{gray}01110\color{lightblue}bbb}$$ | IP_MUL      |
 | $${\color{gray}01111\color{lightblue}bbb}$$ | IP_DIV      |
-| $${\color{gray}10000\color{lightblue}bbb}$$ | RET         |
+| $${\color{gray}100000\color{orange}cc}$$    | INVOKE      |
 | $${\color{gray}10001\color{lightblue}bbb}$$ | CMP_GT      |
 | $${\color{gray}10010\color{lightblue}bbb}$$ | CMP_EQ      |
 | $${\color{gray}10011\color{lightblue}bbb}$$ | CMP_GE      |
 | $${\color{gray}10100\color{lightblue}bbb}$$ | CMP_LT      |
 | $${\color{gray}10101\color{lightblue}bbb}$$ | CMP_NQ      |
 | $${\color{gray}10110\color{lightblue}bbb}$$ | CMP_LE      |
-| $${\color{gray}10111\color{orange}ccc}$$    | CALL        |
+| $${\color{gray}10111\color{lightblue}bbb}$$ |             |
 | $${\color{gray}11000000}$$                  | I_MAKEARRAY |
 | $${\color{gray}11000001}$$                  | B_MAKEARRAY |
 | $${\color{gray}11000010}$$                  | F_MAKEARRAY |
