@@ -19,6 +19,9 @@ mqtype::status_t mq::sync_interpreter::step() const {
         [LD_CONST] = &&op_LD_CONST,
         [LD_ARG] = &&op_LD_ARG,
         [LDI] = &&op_LDI,
+        [LDII] = &&op_LDII,
+        [LDIII] = &&op_LDIII,
+        [LDIIII] = &&op_LDIIII,
         [STORE_LOCAL] = &&op_STORE_LOCAL,
         [ADD] = &&op_ADD,
         [SUB] = &&op_SUB,
@@ -87,6 +90,21 @@ MQ_DefineOP(op_LDI,
     MQ_PCIncr(2);
 )
 
+MQ_DefineOP(op_LDII,
+    MQ_StackPush(ARG0 << 8 | ARG1);
+    MQ_PCIncr(3);
+)
+
+MQ_DefineOP(op_LDIII,
+    MQ_StackPush(ARG0 << 16 | ARG1 << 8 | ARG2);
+    MQ_PCIncr(4);
+)
+
+MQ_DefineOP(op_LDIIII,
+    MQ_StackPush(ARG0 << 24 | ARG1 << 16 | ARG2 << 8 | ARG3);
+    MQ_PCIncr(5);
+)
+
 MQ_DefineOP(op_STORE_LOCAL,
     current_frame()->locals_pool[ARG0] = MQ_StackPop();
     MQ_PCIncr(2);
@@ -121,17 +139,17 @@ MQ_DefineOP(op_NEG,
 
 MQ_DefineOP(op_IP_ADD,
     current_frame()->locals_pool[ARG0] += MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_SUB,
     current_frame()->locals_pool[ARG0] -= MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_MUL,
     current_frame()->locals_pool[ARG0] *= MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_DIV,
@@ -140,12 +158,12 @@ MQ_DefineOP(op_IP_DIV,
 
 MQ_DefineOP(op_IP_MOD,
     current_frame()->locals_pool[ARG0] %= MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_NEG,
     current_frame()->locals_pool[ARG0] *= -1;
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_OR,
@@ -170,22 +188,22 @@ MQ_DefineOP(op_NOT,
 
 MQ_DefineOP(op_IP_OR,
     current_frame()->locals_pool[ARG0] |= MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_XOR,
     current_frame()->locals_pool[ARG0] ^= MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_AND,
     current_frame()->locals_pool[ARG0] &= MQ_StackPop();
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_IP_NOT,
     current_frame()->locals_pool[ARG0] = !current_frame()->locals_pool[ARG0];
-    MQ_PCIncr();
+    MQ_PCIncr(2);
 )
 
 MQ_DefineOP(op_CALL,

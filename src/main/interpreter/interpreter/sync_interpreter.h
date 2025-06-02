@@ -18,6 +18,8 @@
 
 #define ARG0 fetch_arg(0)
 #define ARG1 fetch_arg(1)
+#define ARG2 fetch_arg(2)
+#define ARG3 fetch_arg(3)
 
 namespace mq {
     class sync_interpreter {

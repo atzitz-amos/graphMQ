@@ -16,14 +16,14 @@ int main() {
     entrypoint->const_pool = nullptr;
 
     auto* instructions = new mqtype::byte[]{
-        mqtype::bytecodes::LDI, 0xFF,
+        mqtype::bytecodes::LDIII, 0xFF, 0xFF, 0xFF,
         mqtype::bytecodes::STORE_LOCAL, 0x0,
         mqtype::bytecodes::LD_LOCAL, 0x0,
-        mqtype::bytecodes::LDI, 0x2,
-        mqtype::bytecodes::IF_CMPEQ, 0x10,
+        mqtype::bytecodes::LDI, 0x0,
+        mqtype::bytecodes::IF_CMPEQ, 0x12,
         mqtype::bytecodes::LDI, 0x1,
         mqtype::bytecodes::IP_SUB, 0x0,
-        mqtype::bytecodes::JMP, 0x4,
+        mqtype::bytecodes::JMP, 0x6,
         mqtype::bytecodes::DEBUG,
         mqtype::bytecodes::RET
     };
@@ -39,7 +39,7 @@ int main() {
     auto [return_code, execution_time] = MQ_InterpretBegin(vm);
 
     std::cout << "Interpreter finished execution." << std::endl << "Total execution time: "
-        << execution_time << " seconds." << std::endl;
+        << execution_time * 1000 << " ms." << std::endl;
 
 
     MQ_VMCleanup(vm);
