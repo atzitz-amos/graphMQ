@@ -1,0 +1,15 @@
+entrypoint {
+    #stack_size 1;
+    #local_size 0;
+    -------------
+    0: push 0;
+    1: await 'something' 1;
+}
+
+node 'something' () : int {
+    #stack_size 1;
+    #local_size 0;
+    -------------
+    0: push 0;
+    1: ret;
+}

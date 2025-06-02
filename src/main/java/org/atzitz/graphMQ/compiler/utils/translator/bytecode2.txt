@@ -1,0 +1,21 @@
+
+entrypoint {
+    #stack_size 2;
+
+    -------------
+    0: push #0;
+    1: push #1;
+    2: cmp_eq;
+    3: await 'something' 1;
+}
+
+heavy node 'something' (int[]) : int {
+    #stack_size 1;
+
+    -------------
+    0: push #0;
+    1: push <0>;
+    2: ret;
+    3: push ..4;
+    4: cmp_eq ->3;
+}

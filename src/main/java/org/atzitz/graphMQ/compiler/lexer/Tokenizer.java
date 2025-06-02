@@ -92,7 +92,7 @@ public class Tokenizer {
                 } else {
                     result = new Token(String.valueOf(c), TokenType.Comparison, Location.of(src.crow(), src.ccol(), src.crow(), src.ccol() + 1));
                 }
-            } else if (org.atzitz.graphMQ.compiler.lexer.Constants.OPERATORS.contains(String.valueOf(c))) {
+            } else if (Constants.OPERATORS.contains(String.valueOf(c))) {
                 var res = this.resolveIdentifiers();
                 if (res != null) return res;
                 if (src.seekNext() == '=') {

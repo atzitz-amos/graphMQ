@@ -1,0 +1,75 @@
+
+
+int main() {
+    int n = 12;
+    Array<int> divisors = getDivisors(n);
+    for (int i = 0; i < divisors.size(); i++) {
+        print(divisors[i]);
+    }
+}
+
+
+heavy Array<int> getDivisors(int n) {
+    Array<int> divisors = new Array<int>();
+    for (int i = 1; i <= n; i++) {
+        if (n % i == 0) {
+            divisors.push(i);
+        }
+    }
+    return divisors;
+}
+
+// ByteCode
+
+getDivisors:
+    .L0
+    1. build Array.new   // Array<int>
+    2. store local 0     // divisors
+
+    .L1
+    3. push int 1
+    4. store iter 0     // i
+    5. ifor_u .L2
+    6. push local 0
+    7. return
+
+    .L2
+    8. push arg 0
+    9. push iter 0
+    10. mod
+    11. push int 0
+    12. jnq .L3
+    13. push iter 0
+    14. push local 0
+    15. invk `push` 1       // Array<int>.push
+
+    .L3
+    16. incriter 0
+    17. jmp .L1
+
+
+
+main:
+    .L0
+    1. push int 12
+    2. store local 0     // n
+    3. push local 0
+    4. call `getDivisors` 1
+    5. store local 1     // divisors
+    6. push int 0
+    7. store iter 0      // i
+
+    .L1
+    8. push local 1
+    9. invk `size` 0       // Array<int>.size
+    10. ifor_o .L2
+    11. return
+
+    .L2
+    12. push local 1
+    13. load iter 0
+    14. invk `#getitem` 1       // Array<int>.get
+    15. call `print` 1
+    16. push int 1
+    17. incriter 0
+    18. jump .L1

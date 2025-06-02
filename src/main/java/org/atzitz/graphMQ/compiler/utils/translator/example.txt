@@ -1,0 +1,65 @@
+entrypoint {
+    #stack_size 3;
+
+    -----------
+    0: push 1000;
+    1: push 1000;
+    2: i_makearray 2;
+    3: store #0;
+    4: push 0;
+    5: store $0;
+    6: u_ifor [
+        7: arrlength #0;
+        8: push $0;
+        9: cmp_lt;
+    ] {
+        10: push 0;
+        11: store $1;
+        12: u_ifor [
+            13: arrlength #0;
+            14: push $1;
+            15: cmp_lt;
+        ] {
+            16: push $0;
+            17: arraccess #0;
+            18: push $1;
+            19: push 1;
+            20: arrstore;
+        }
+    }
+    21: push #0;
+    22: await 'squaredSum' 1;
+}
+
+heavy node 'sum' (int[]) : int {
+    #stack_size 2;
+
+    -----------
+    0: push 0;
+    1: store #0;
+    2: push <0>;
+    3: u_efor {
+        4: push $0;
+        5: ipadd #0;
+    }
+    6: push #0;
+    7: ret;
+}
+
+heavy node 'squaredSum' (int[][]) : int {
+    #stack_size 3;
+
+    -----------
+    0: push 0;
+    1: store #0;
+    2: push <0>;
+    3: u_efor {
+        4: push $0;
+        5: arraccess <0>;
+        6: asynccall 'sum' 1;
+        7: ipadd #0;
+    }
+    8: join;
+    9: push #0;
+    10: ret;
+}

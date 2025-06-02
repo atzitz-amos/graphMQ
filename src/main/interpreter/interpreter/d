@@ -1,0 +1,131 @@
+
+
+heavy recursive int fib(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+
+heavy int func(int a, int b) {
+    for (int i = 0; i < 1000000; i++) {
+        a += b;
+    }
+    return a;
+}
+
+
+// -------------- Bytecode --------------
+
+fib(int):
+     0: iconst 1
+     1: push arg 0
+     2: jle .L0
+     3: push arg 0
+     4: decr
+     5: sched fib(I) 1
+     6: push arg 0
+     7: ddecr
+     8: sched fib(I) 1
+     9: await $0
+    10: await $1
+    11: add
+    12: ret
+.L0
+    13: push arg 0
+    14: ret
+
+func(int, int):
+    0: iconst 0
+    1: store iter #0
+.L1
+    2: push const #0
+    3: push iter #0
+    4: jge .L2
+    5: push arg #0
+    6: ip_add arg #1
+    7: store arg #0
+    8: incr_iter #0
+    9: jump .L1
+.L2
+    10: push arg #0
+    11: ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[%] push local / const / arg
+    - 100 000 <00>   # 2 bits are for local/const/arg
+
+[%] store arg / local / const
+    - 100 001 <00>   # 2 bits are for arg/local/const
+
+[%] and / or / xor / not
+    - 101 0[00] <00>  # 2 bits for operation + 2 bits for arg/local/const/stack
+
+[%] ip_and / ip_or / ip_xor / ip_not
+    - 101 1[00] <00>  # 2 bits for operation + 2 bits for arg/local/const/stack
+
+[%] add / sub / mul / div / mod / shr / shl / neg
+    - 110 [000] <00>  # 3 bits for operation + 2 bits for arg/local/const/stack
+
+[%] ip_add / ip_sub / ip_mul / ip_div / ip_mod / ip_shr / ip_shl   # TOS op TOS1
+    - 111 [000] <00>  # 3 bits for operation
+
+
+decr / ddecr
+    - 000001 00 / 000001 01
+
+incr / iincr
+    - 000001 10 / 000001 11
+
+iconst
+    - 000010 [00]  // If Lbs is 00, push 0  / If Lbs is 01, push 1  / If Lbs is 10, push -1  / If Lbs is 11, push arg
+
+if_cmpeq / if_cmpne / if_cmplt / if_cmple / if_cmpgt / if_cmpge   }  3 bits
+jmp                                                               }  3 bits
+    - 00010 <000>  # 3 bits for operation
+
+i_makearray / b_makearray
+    - 001000 00 / 001000 01
+
+arr_get / arr_set / arr_len
+    - 001001 00 / 001001 01 / 001001 10
+
+call / sched / await / ret
+    - 001010 00 / 001010 01 / 001010 10 / 001010 11
+
+
+
+
+NOP = 0000 0000
+PUSH_LOCAL = 0000 0001
+PUSH_CONST = 0000 0010
+PUSH_ARG = 0000 0011
+STORE_LOCAL = 0000 0100
+STORE_ARG = 0000 0101
