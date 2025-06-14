@@ -13,8 +13,7 @@ mqtype::task* MQ_CreateEntryTask(const mqtype::mq_program* program) {
 
     entry_task->current_frame = new mqtype::frame(
         program->entry_point,
-        nullptr, // No arguments for the entry point
-        nullptr // No return value address for the entry point
+        nullptr // No arguments for the entry point
     );
 
     return entry_task;
@@ -34,10 +33,10 @@ void mq::MQ_InitVM(vm_t* vm) {
 }
 
 mqtype::runtime_exec_info mq::MQ_InterpretBegin(vm_t* vm) {
-    vm->tic.run();
+    vm->_tic.Run();
 
     const auto begin = std::chrono::steady_clock::now();
-    vm->tic.join();
+    vm->_tic.Join();
 
     mqtype::runtime_exec_info exec_info;
     exec_info.return_code = 0;

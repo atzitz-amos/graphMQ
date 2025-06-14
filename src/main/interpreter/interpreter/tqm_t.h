@@ -70,7 +70,7 @@ namespace mq_queue {
             std::lock_guard lock(_mutex);
 
             if (head == nullptr) {
-                throw std::runtime_error("Queue is empty");
+                return nullptr;
             }
 
             const node<T>* temp = head;

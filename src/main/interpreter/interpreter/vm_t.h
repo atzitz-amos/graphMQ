@@ -17,10 +17,10 @@ namespace mq {
     struct vm_t {
         mqtype::mq_program* program;
         tqm_t tqm;
-        tic_t tic;
+        tic_t _tic;
 
         explicit vm_t(mqtype::mq_program* program)
-            : program(program), tic(this) {}
+            : program(program), _tic(this) {}
 
         ~vm_t() {
             delete program;

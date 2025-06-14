@@ -11,39 +11,52 @@
 
 
 void mq::threaded_interpreter::run() {
+    __debug("Created");
+
     while (true) {
         if (signal.load() == mqtype::SIG_ABORT) {
-            std::terminate();
-        }
-        if (signal.load() == mqtype::SIG_TERMINATE_AND_CLEANUP) {
             cleanup();
+
+            __debug("Quitting...");
             return;
         }
 
         if (current_task == nullptr || syncinterpreter == nullptr) {
-            if (interpreter->tqm.empty()) {
-                if (signal.load() == mqtype::SIG_KEEP_ALIVE) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                }
-                else {
-                    signal.store(mqtype::SIG_TERMINATE_AND_CLEANUP);
-                }
-                continue;
-            }
             current_task = interpreter->tqm.pop();
 
-            syncinterpreter = new sync_interpreter(interpreter->program, current_task);
+            if (current_task == nullptr) {
+                if (interpreter->_tic.NoMoreTasks()) {
+                    __debug("No more tasks, quitting...");
+                    return;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+
+            syncinterpreter = new sync_interpreter(interpreter->program, current_task, interpreter);
+
+            interpreter->_tic.IncrTaskCount();
+            __debug("Took task over: ...");
         }
 
-        auto [message, value] = syncinterpreter->step();
-
-        if (value == mqtype::STATUS_ERROR_SHOULD_ABORT) {
-            std::cerr << "Error: " << message << std::endl;
-            signal.store(mqtype::SIG_ABORT);
-            return;
+        if (const auto [message, value, arg] = syncinterpreter->step(); value == mqtype::STATUS_ERROR_SHOULD_ABORT) {
+            std::cerr << "[threaded_interpreter " << id << "]" << " Fatal Error: " << message << std::endl <<
+                "Aborting...";
+            interpreter->_tic.Abort();
         }
-        if (value == mqtype::STATUS_TASK_OVER) {
-            signal.store(mqtype::SIG_TERMINATE_AND_CLEANUP);
+        else if (value == mqtype::STATUS_THREAD_FREED) {
+            interpreter->_tic.DecrTaskCount();
+            if (syncinterpreter) {
+                delete syncinterpreter;
+                syncinterpreter = nullptr;
+            }
+            current_task = nullptr;
+            __debug("Task done, freeing thread...");
+        }
+        else if (value == mqtype::STATUS_SHOULD_CLEANUP) {
+            interpreter->_tic.DecrTaskCount();
+            cleanup();
+            __debug("Cleaning up...");
         }
     }
 }

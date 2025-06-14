@@ -18,15 +18,17 @@ namespace mq {
         vm_t* interpreter_instance;
         std::vector<threaded_interpreter*> threads;
 
+        std::atomic<int> task_count = 0; // Number of tasks currently running
+
     public:
         explicit tic_t(vm_t* interpreter_instance): interpreter_instance(interpreter_instance) {}
 
-        void run();
-        void join() const;
+        void Run();
+        void Join() const;
 
-        void terminate();
+        void Terminate();
 
-        void abort();
+        void Abort();
 
         ~tic_t() {
             for (const auto& thread : threads) {
@@ -36,6 +38,19 @@ namespace mq {
                 delete thread;
             }
             threads.clear();
+        }
+
+
+        void IncrTaskCount() {
+            ++task_count;
+        }
+
+        void DecrTaskCount() {
+            --task_count;
+        }
+
+        bool NoMoreTasks() const {
+            return task_count.load() == 0;
         }
     };
 }

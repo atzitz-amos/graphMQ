@@ -8,6 +8,9 @@
 
 #include "interpreter_threaded.h"
 
+#include "debug.h"
+#include "vm_t.h"
+
 using namespace mqtype::bytecodes;
 
 // @formatter:off
@@ -59,71 +62,66 @@ mqtype::status_t mq::sync_interpreter::step() const {
 
     const mqtype::byte instruction = *current_instr();
     if (jump_table[instruction] == nullptr) {
-        throw std::runtime_error("Invalid instruction encountered: " + std::to_string(instruction));
+        return mqtype::status_t::error("Invalid instruction encountered: " + std::to_string(instruction));
     }
 
     intptr_t temp;
+    mqtype::frame* new_frame;
+    mqtype::task* s_task;
+
+    #ifdef DEBUG_ENABLED
+        std::string stack_content = "";
+        std::string locals_content = "";
+    #endif
 
     goto *jump_table[instruction];
 
 MQ_DefineOP(op_NOP,
-    MQ_PCIncr();
-)
+    MQ_PCIncr();)
 
 MQ_DefineOP(op_LD_LOCAL,
     MQ_StackPush(current_frame()->locals_pool[ARG0]);
-    MQ_PCIncr(2);
-)
+    MQ_PCIncr(2);)
 
 MQ_DefineOP(op_LD_CONST,
     MQ_StackPush(current_frame()->const_pool[ARG0]);
-    MQ_PCIncr(2);
-)
+    MQ_PCIncr(2);)
 
 MQ_DefineOP(op_LD_ARG,
     MQ_StackPush(current_frame()->args_pool[ARG0]);
-    MQ_PCIncr(2);
-)
+    MQ_PCIncr(2);)
 
 MQ_DefineOP(op_LDI,
     MQ_StackPush(ARG0);
-    MQ_PCIncr(2);
-)
+    MQ_PCIncr(2);)
 
 MQ_DefineOP(op_LDII,
     MQ_StackPush(ARG0 << 8 | ARG1);
-    MQ_PCIncr(3);
-)
+    MQ_PCIncr(3);)
 
 MQ_DefineOP(op_LDIII,
     MQ_StackPush(ARG0 << 16 | ARG1 << 8 | ARG2);
-    MQ_PCIncr(4);
-)
+    MQ_PCIncr(4);)
 
 MQ_DefineOP(op_LDIIII,
     MQ_StackPush(ARG0 << 24 | ARG1 << 16 | ARG2 << 8 | ARG3);
-    MQ_PCIncr(5);
-)
+    MQ_PCIncr(5);)
 
 MQ_DefineOP(op_STORE_LOCAL,
     current_frame()->locals_pool[ARG0] = MQ_StackPop();
-    MQ_PCIncr(2);
-)
+    MQ_PCIncr(2);)
 
 MQ_DefineOP(op_ADD,
     MQ_StackReduce(+);
-    MQ_PCIncr();
-)
+    MQ_PCIncr();)
 
 MQ_DefineOP(op_SUB,
     MQ_StackReduce(-);
-    MQ_PCIncr();
-)
+    MQ_PCIncr();)
 
 MQ_DefineOP(op_MUL,
     MQ_StackReduce(*);
-    MQ_PCIncr();
-)
+    MQ_PCIncr();)
 
 MQ_DefineOP(op_DIV,
     // TODO
@@ -207,19 +205,52 @@ MQ_DefineOP(op_IP_NOT,
 )
 
 MQ_DefineOP(op_CALL,
-    // TODO
+    new_frame = MQ_NewFrame(program->mq_methods + ARG0, ARG1);
+    new_frame->previous_frame = current_frame();
+
+    MQ_PCIncr(3);
+    task->current_frame = new_frame;
 )
 
-MQ_DefineOP(op_SCHED,
-    // TODO
-)
+op_SCHED:
+    s_task = MQ_CreateTask(MQ_NewFrame(program->mq_methods + ARG0, ARG1));
+    current_frame()->locals_pool[ARG2] = reinterpret_cast<intptr_t> (s_task);
+    MQ_PCIncr(4);
+    vm->tqm.create(s_task, 2);
+    goto CLEANUP;
 
-MQ_DefineOP(op_AWAIT,
-    // TODO
-)
+
+op_AWAIT:
+    s_task = reinterpret_cast<mqtype::task*>(current_frame()->locals_pool[ARG0]);
+    if (s_task->CS_FLAG) {
+        MQ_StackPush(s_task->ac_return_value);
+        delete s_task;  // We can safely assume the task is done
+        MQ_PCIncr(2);
+    } else {
+        s_task->AC_TASK_ORIGIN = task;
+        s_task->AC_FLAG = true;
+        return mqtype::status_t::mark_as_free();
+    }
+    goto CLEANUP;
+
 
 MQ_DefineOP(op_RET,
-    return mqtype::status_t::task_over();
+    if (task->isScheduled) {
+        task->CS_FLAG = true;
+        task->ac_return_value = MQ_StackPop();
+        if (task->AC_FLAG) {
+            vm->tqm.create(task->AC_TASK_ORIGIN, 1);  // Schedule the task that was waiting for this task
+        }
+        return mqtype::status_t::mark_as_free();
+    } else {
+        if (task->current_frame->previous_frame == nullptr) {  // Task is done
+            return mqtype::status_t::should_cleanup();
+        }
+
+        temp = MQ_StackPop();
+        MQ_RestoreFrame();
+        MQ_StackPush(temp);
+    }
 )
 
 MQ_DefineOP(op_IF_CMPGE,
@@ -280,21 +311,36 @@ MQ_DefineOP(op_JMP,
     MQ_SetPC(ARG0);
 )
 
-MQ_DefineOP(op_DEBUG,
-    std::cout << "DEBUG:  PC = " << current_frame()->PC << ", SP = " << (current_frame()->SP - current_frame()->stack) << std::endl
-    << "\tCurrent instruction: " << static_cast<int>(current_instr()[0]) << std::endl
-    << "\tStack contents: ";
-    for (int i = 0; i < (current_frame()->SP - current_frame()->stack); ++i) {
-        std::cout << current_frame()->stack[i] << " ";
+#ifdef DEBUG_ENABLED
+    op_DEBUG:
+        for (int i = 0; i < (current_frame()->SP - current_frame()->stack); ++i) {
+            stack_content += std::to_string(current_frame()->stack[i]) + ", ";
+        }
+    for (int i = 0; i < current_frame()->localsc; ++i) {
+        locals_content += std::to_string(current_frame()->locals_pool[i]) + ", ";
     }
-    std::cout << std::endl << "\tLocals contents: ";
-    for (int i = 0; i < current_frame()->locals_count; ++i) {
-        std::cout << current_frame()->locals_pool[i] << " ";
-    }
-    std::cout << std::endl;
+    print("\nDEBUG:  PC = ", current_frame()->PC, ", SP = ", (current_frame()->SP - current_frame()->stack), "\n",
+          "\tCurrent instruction: ", static_cast<int>(current_instr()[0]), "\n", "\tStack contents: stack = ",
+          stack_content, "\n", "\tLocals contents: locals = ", locals_content, "\n\n");
     MQ_PCIncr();
-)
+    goto CLEANUP;
 
+// MQ_DefineOP(op_DEBUG,
+//     for (int i = 0; i < (current_frame()->SP - current_frame()->stack); ++i) {
+//         stack_content += current_frame()->stack[i] + " ";
+//     }
+//     for (int i = 0; i < current_frame()->localsc; ++i) {
+//         locals_content += current_frame()->locals_pool[i] + " ";
+//     }
+//
+//     print("\nDEBUG:  PC = ", current_frame()->PC, ", SP = ", (current_frame()->SP - current_frame()->stack), "\n",
+//         "\tCurrent instruction: ", static_cast<int>(current_instr()[0]), "\n",
+//         "\tStack contents: stack = ", stack_content, "\n",
+//         "\tLocals contents: locals = ", locals_content, "\n\n");
+//
+//     MQ_PCIncr();
+// )
+#endif
 
 CLEANUP:
     return mqtype::status_t::ok();

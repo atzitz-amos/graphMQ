@@ -4,6 +4,7 @@
 
 #ifndef INTERPRETER_THREADED_H
 #define INTERPRETER_THREADED_H
+#include <memory>
 #include <thread>
 
 #include "mqtypes.h"

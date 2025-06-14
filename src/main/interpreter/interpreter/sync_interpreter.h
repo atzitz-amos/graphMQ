@@ -22,20 +22,22 @@
 #define ARG3 fetch_arg(3)
 
 namespace mq {
+    struct vm_t;
+
     class sync_interpreter {
         const mqtype::mq_program* program;
         mqtype::task* task;
 
-        const mqtype::instr_t base_instr_addr = program->instructions + task->current_frame->location;
+        vm_t* vm;
 
     public:
-        explicit sync_interpreter(const mqtype::mq_program* program,
-                                  mqtype::task* task) : program(program), task(task) {}
+        sync_interpreter(const mqtype::mq_program* program, mqtype::task* task, vm_t* vm) : program(program),
+            task(task), vm(vm) {}
 
         mqtype::status_t step() const;
 
         mqtype::instr_t current_instr() const {
-            return base_instr_addr + task->current_frame->PC;
+            return program->instructions + task->current_frame->location + task->current_frame->PC;
         }
 
         mqtype::frame* current_frame() const {
@@ -61,6 +63,25 @@ namespace mq {
         void MQ_SetPC(const int value) const {
             task->current_frame->PC = value;
         };
+
+        void MQ_RestoreFrame() const {
+            task->current_frame = task->current_frame->previous_frame;
+        }
+
+        mqtype::task* MQ_CreateTask(mqtype::frame* frame) const {
+            auto* new_task = new mqtype::task();
+            new_task->current_frame = frame;
+            new_task->isScheduled = true;
+            return new_task;
+        }
+
+        mqtype::frame* MQ_NewFrame(const mqtype::mq_method* method, const int argc) const {
+            auto* args_ptr = new intptr_t[argc];
+            for (int i = argc - 1; i >= 0; --i) {
+                args_ptr[i] = MQ_StackPop();
+            }
+            return new mqtype::frame(method, args_ptr);
+        }
     };
 }
 

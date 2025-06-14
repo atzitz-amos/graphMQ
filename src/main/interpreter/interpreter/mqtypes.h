@@ -4,7 +4,11 @@
 
 #ifndef FRAME_H
 #define FRAME_H
+#include <map>
 #include <thread>
+
+#include "debug.h"
+#include <atomic>
 
 namespace mqtype {
     typedef unsigned char byte;
@@ -15,6 +19,7 @@ namespace mqtype {
 
         int stack_size;
         int locals_count;
+        int argc;
 
         intptr_t* const_pool;
 
@@ -45,7 +50,8 @@ namespace mqtype {
         int PC = 0;
 
         int stack_size = 0;
-        int locals_count = 0;
+        int localsc = 0;
+        int argc = 0;
 
         intptr_t* stack;
         intptr_t* SP = stack;
@@ -55,27 +61,28 @@ namespace mqtype {
 
         intptr_t* const_pool;
 
-        intptr_t* return_value_addr;
-
         frame* previous_frame = nullptr;
 
-        frame(const mq_method* method, intptr_t* args_ptr, intptr_t* return_value_addr) :
+        frame(const mq_method* method, intptr_t* args_ptr) :
             location(method->location),
             stack_size(method->stack_size),
-            locals_count(method->locals_count),
+            localsc(method->locals_count),
+            argc(method->argc),
             stack(new intptr_t[method->stack_size]),
             locals_pool(new intptr_t[method->locals_count]),
             args_pool(args_ptr),
-            const_pool(method->const_pool),
-            return_value_addr(return_value_addr) {}
+            const_pool(method->const_pool) {}
 
         ~frame() {
             delete[] stack;
             delete[] locals_pool;
             stack = nullptr;
             locals_pool = nullptr;
-            args_pool = nullptr;
-            return_value_addr = nullptr;
+
+            if (args_pool != nullptr) {
+                delete[] args_pool;
+                args_pool = nullptr;
+            }
         }
     };
 
@@ -84,6 +91,8 @@ namespace mqtype {
 
         bool CS_FLAG = false;
         bool AC_FLAG = false;
+
+        task* AC_TASK_ORIGIN = nullptr; // The task that created this task, used for async tasks
 
         bool isScheduled = false;
 
@@ -108,6 +117,50 @@ namespace mqtype {
     };
 
     namespace bytecodes {
+        const std::string opcodes_names[] = {
+            "NOP",
+            "LD_LOCAL",
+            "LD_CONST",
+            "LD_ARG",
+            "LDI",
+            "LDII",
+            "LDIII",
+            "LDIIII",
+            "STORE_LOCAL",
+            "ADD",
+            "SUB",
+            "MUL",
+            "DIV",
+            "MOD",
+            "NEG",
+            "IP_ADD",
+            "IP_SUB",
+            "IP_MUL",
+            "IP_DIV",
+            "IP_MOD",
+            "IP_NEG",
+            "OR",
+            "AND",
+            "XOR",
+            "NOT",
+            "IP_OR",
+            "IP_AND",
+            "IP_XOR",
+            "IP_NOT",
+            "CALL",
+            "SCHED",
+            "AWAIT",
+            "RET",
+            "IF_CMPGE",
+            "IF_CMPGT",
+            "IF_CMPEQ",
+            "IF_CMPNE",
+            "IF_CMPLT",
+            "IF_CMPLE",
+            "JMP",
+            "DEBUG"
+        };
+
         #define DEFINE_OPCODE(name) constexpr mqtype::byte name = __COUNTER__;
 
         // Define opcodes with automatic incrementing values
@@ -152,7 +205,9 @@ namespace mqtype {
         DEFINE_OPCODE(IF_CMPLE)
         DEFINE_OPCODE(JMP)
 
+    #ifdef DEBUG_ENABLED
         DEFINE_OPCODE(DEBUG);
+    #endif
 
         static constexpr int MAX_OPCODE = __COUNTER__ - 1; // Maximum opcode value
     }
@@ -160,23 +215,30 @@ namespace mqtype {
     enum status_value {
         STATUS_OK = 0,
         STATUS_ERROR_SHOULD_ABORT = 1,
-        STATUS_TASK_OVER = 2
+        STATUS_THREAD_FREED = 2,
+        STATUS_SHOULD_CLEANUP = 3,
+        ENQUEUE = 4,
     };
 
     struct status_t {
-        char* message;
+        const std::string& message;
         status_value value;
+        void* arg = nullptr;
 
-        static status_t error(char* message) {
+        static status_t error(const std::string& message) {
             return {message, STATUS_ERROR_SHOULD_ABORT};
         }
 
         static status_t ok() {
-            return {nullptr, STATUS_OK};
+            return {"", STATUS_OK};
         }
 
-        static status_t task_over() {
-            return {nullptr, STATUS_TASK_OVER};
+        static status_t mark_as_free() {
+            return {"", STATUS_THREAD_FREED};
+        }
+
+        static status_t should_cleanup() {
+            return {"", STATUS_SHOULD_CLEANUP};
         }
     };
 }
