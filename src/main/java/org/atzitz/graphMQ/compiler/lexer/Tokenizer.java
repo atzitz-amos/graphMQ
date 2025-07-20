@@ -73,6 +73,7 @@ public class Tokenizer {
             char c = src.seek();
             if (c == '\n' || c == ' ') {
                 var res = this.resolveIdentifiers();
+
                 if (res != null) return res;
             } else if (c == '=') {
                 var res = this.resolveIdentifiers();

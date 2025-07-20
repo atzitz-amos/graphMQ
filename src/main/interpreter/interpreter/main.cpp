@@ -3,7 +3,6 @@
 //
 
 #include <iostream>
-#include <map>
 
 #include "vm_t.h"
 
@@ -24,24 +23,22 @@ int main() {
     (methods + 1)->const_pool = nullptr;
 
     auto* instructions = new mqtype::byte[]{
-        mqtype::bytecodes::LDIIII, 0x00, 0x00, 0x00, 0x15,
+        mqtype::bytecodes::LDIIII, 0x00, 0x00, 0x00, 0x25,
         mqtype::bytecodes::CALL, 0x1, 0x1,
         mqtype::bytecodes::DEBUG,
         mqtype::bytecodes::RET,
         // fib
         mqtype::bytecodes::LD_ARG, 0x0,
         mqtype::bytecodes::LDI, 0x1,
-        mqtype::bytecodes::IF_CMPLE, 0x1E,
+        mqtype::bytecodes::IF_CMPLE, 0x18,
         mqtype::bytecodes::LD_ARG, 0x0,
         mqtype::bytecodes::LDI, 0x1,
         mqtype::bytecodes::SUB,
-        mqtype::bytecodes::SCHED, 0x1, 0x1, 0x0,
+        mqtype::bytecodes::CALL, 0x1, 0x1,
         mqtype::bytecodes::LD_ARG, 0x0,
         mqtype::bytecodes::LDI, 0x2,
         mqtype::bytecodes::SUB,
-        mqtype::bytecodes::SCHED, 0x1, 0x1, 0x1,
-        mqtype::bytecodes::AWAIT, 0x0,
-        mqtype::bytecodes::AWAIT, 0x1,
+        mqtype::bytecodes::CALL, 0x1, 0x1,
         mqtype::bytecodes::ADD,
         mqtype::bytecodes::RET,
         mqtype::bytecodes::LD_ARG, 0x0,
